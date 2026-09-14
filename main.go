@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/OmarLP/api_module/internal/user"
 	"github.com/OmarLP/api_module/pkg/bootstrap"
 	"github.com/joho/godotenv"
 )
@@ -21,8 +22,15 @@ func main() {
 		l.Fatal(err)
 	}
 
+	userRepo := user.NewRepository(l, db)
+	userService := user.NewService(l, userRepo)
+	userEndpoint := user.MakeEndpoints(userService)
+
+	http.HandleFunc("POST /CreateUsers", userEndpoint.CreateUser)
+	http.HandleFunc("PATCH /UpdatePassword", userEndpoint.UpdatePassword)
+
 	// puedo mostrar un mensaje de conección exitosa con el nombre de la base de datos
-	fmt.Printf("Conected to darabase: %v - %s\n", db, db.Migrator().CurrentDatabase())
+	fmt.Printf("Conected to database: %v - %s\n", db, db.Migrator().CurrentDatabase())
 
 	port := ":8080"
 	address := "" + port
