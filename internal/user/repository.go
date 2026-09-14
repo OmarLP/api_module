@@ -46,7 +46,7 @@ func (repo *repository) FindRecorderByDocumentNumber(documentNumber string) (*do
 	return &recorder, nil
 }
 
-// verificar si el coreo ya existe
+// verificar si el coreo ya existe y evitar DUPLICIDAD
 func (repo *repository) ExistsEmail(email string) (bool, error) {
 	var count int64
 

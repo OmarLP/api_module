@@ -28,6 +28,7 @@ func main() {
 
 	http.HandleFunc("POST /CreateUsers", userEndpoint.CreateUser)
 	http.HandleFunc("PATCH /UpdatePassword", userEndpoint.UpdatePassword)
+	http.HandleFunc("PATCH /ResetPassword", userEndpoint.ResetPassword)
 
 	// puedo mostrar un mensaje de conección exitosa con el nombre de la base de datos
 	fmt.Printf("Conected to database: %v - %s\n", db, db.Migrator().CurrentDatabase())

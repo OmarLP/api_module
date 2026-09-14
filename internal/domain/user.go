@@ -33,8 +33,10 @@ type FirstLogin struct {
 
 // Solicita el reseteo de contraseña
 type ForgetPassword struct {
-	DocumentNumber string `json:"numero_documento" validate:"required"`
-	Email          string `json:"correo" validate:"required,email"`
+	DocumentNumber  string `json:"numero_documento" validate:"required"`
+	Email           string `json:"correo" validate:"required,email"`
+	NewPassword     string `json:"new_password"`
+	ConfirmPassword string `json:"confirm_password"`
 }
 
 // login
