@@ -15,6 +15,7 @@ type (
 		CreateUser     Controller
 		UpdatePassword Controller
 		ResetPassword  Controller
+		Login          Controller
 	}
 
 	Response struct {
@@ -29,6 +30,7 @@ func MakeEndpoints(s Service) Endpoints {
 		CreateUser:     makeCreateUserEndpoint(s),
 		UpdatePassword: makeUpdatePasswordEndpoint(s),
 		ResetPassword:  makeResetPasswordEndpoint(s),
+		Login:          makeLoginEndpoint(s),
 	}
 }
 
@@ -127,7 +129,7 @@ func makeUpdatePasswordEndpoint(s Service) Controller {
 
 func makeResetPasswordEndpoint(s Service) Controller {
 	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application-json")
+		w.Header().Set("Content-Type", "application/json")
 
 		var req domain.ForgetPassword
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -177,5 +179,47 @@ func makeResetPasswordEndpoint(s Service) Controller {
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(&Response{Status: 200, Data: "password successfully reset"})
 
+	}
+}
+
+func makeLoginEndpoint(s Service) Controller {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+
+		var req domain.Login
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(&Response{Status: 400, Err: "invalid request format"})
+			return
+		}
+
+		if req.Email == "" {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(&Response{Status: 400, Err: "email is required"})
+			return
+		}
+
+		_, err := mail.ParseAddress(req.Email)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(&Response{Status: 400, Err: "invalid email format"})
+			return
+		}
+
+		if req.Password == "" {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(&Response{Status: 400, Err: "password is required"})
+			return
+		}
+
+		token, err := s.Login(req.Email, req.Password)
+		if err != nil {
+			w.WriteHeader(http.StatusUnauthorized)
+			json.NewEncoder(w).Encode(&Response{Status: 401, Err: "invalid credentials"})
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(&Response{Status: 200, Data: token})
 	}
 }

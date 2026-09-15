@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/OmarLP/api_module/internal/domain"
+	"github.com/OmarLP/api_module/pkg/authorization"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -13,6 +14,7 @@ type (
 		CreateUser(documentNumber, email string) (*domain.User, error)
 		SetFirstPassword(recoder domain.FirstLogin) error
 		ResetPassword(req domain.ForgetPassword) error
+		Login(email, password string) (string, error)
 	}
 
 	service struct {
@@ -125,4 +127,36 @@ func (s service) ResetPassword(req domain.ForgetPassword) error {
 	}
 
 	return s.repo.UpdatePassword(user.IDUser, string(hashedPassword))
+}
+
+func (s service) Login(email, password string) (string, error) {
+	// validar que no haya error
+	user, err := s.repo.FindByEmail(email)
+	if err != nil {
+		return "", nil
+	}
+
+	// validar que su cuenta este activa
+	if user.Status != 1 {
+		return "", errors.New("user account is inactive")
+	}
+
+	// validar que el usuario tenga contraseña
+	if user.Password == nil {
+		return "", errors.New("you must register your initial password first")
+	}
+
+	// comparar los passwords
+	if err := bcrypt.CompareHashAndPassword([]byte(*user.Password), []byte(password)); err != nil {
+		s.log.Println("invalid credentials:")
+		return "", errors.New("invalid credentials")
+	}
+
+	token, err := authorization.GenerateToken(int64(user.IDUser), user.Email)
+	if err != nil {
+		s.log.Println("error generating token:", err)
+		return "", err
+	}
+
+	return token, nil
 }

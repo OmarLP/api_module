@@ -6,11 +6,18 @@ import (
 	"net/http"
 
 	"github.com/OmarLP/api_module/internal/user"
+	"github.com/OmarLP/api_module/pkg/authorization"
 	"github.com/OmarLP/api_module/pkg/bootstrap"
 	"github.com/joho/godotenv"
 )
 
 func main() {
+	//
+	err := authorization.LoadFiles("cmd/certificates/private.pem", "cmd/certificates/public.pem")
+	if err != nil {
+		log.Fatalf("Error al cargar los certificados: %v", err)
+	}
+
 	// cargar las variables de entorno desde el archivo .env
 	_ = godotenv.Load()
 
@@ -29,6 +36,7 @@ func main() {
 	http.HandleFunc("POST /CreateUsers", userEndpoint.CreateUser)
 	http.HandleFunc("PATCH /UpdatePassword", userEndpoint.UpdatePassword)
 	http.HandleFunc("PATCH /ResetPassword", userEndpoint.ResetPassword)
+	http.HandleFunc("POST /Login", userEndpoint.Login)
 
 	// puedo mostrar un mensaje de conección exitosa con el nombre de la base de datos
 	fmt.Printf("Conected to database: %v - %s\n", db, db.Migrator().CurrentDatabase())
