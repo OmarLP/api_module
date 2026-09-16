@@ -89,3 +89,29 @@ func (repo *repository) UpdatePassword(userID int, hashedPassword string) error 
 		Where("id_usuario = ?", userID).
 		Update("clave", hashedPassword).Error
 }
+
+// refresh token
+// guardar token
+func (repo *repository) SaveRefreshToken(token *domain.RefreshToken) error {
+	return repo.db.Create(token).Error
+}
+
+// buscar token y verificar que exista
+func (repo *repository) FindRefreshToken(tokenString string) (*domain.RefreshToken, error) {
+	var token domain.RefreshToken
+	err := repo.db.Where("token = ?", tokenString).First(&token).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("refresh token not found")
+		}
+		return nil, err
+	}
+	return &token, nil
+}
+
+// revocar un token (revoked tiene que estar en true)
+func (repo *repository) RevokeRefreshToken(tokenString string) error {
+	return repo.db.Model(&domain.RefreshToken{}).
+		Where("token = ?", tokenString).
+		Update("revoked", true).Error
+}

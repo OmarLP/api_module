@@ -1,6 +1,8 @@
 package authorization
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"time"
 
@@ -55,4 +57,13 @@ func ValidateToken(tokenString string) (*Claim, error) {
 	}
 
 	return claims, nil
+}
+
+// generador de cadenas criptográficas
+func GenerateRefreshToken() (string, error) {
+	bytes := make([]byte, 32) //byte 32 = 256 buts de seguridad
+	if _, err := rand.Read(bytes); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(bytes), nil
 }

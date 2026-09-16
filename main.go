@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/OmarLP/api_module/internal/middleware"
 	"github.com/OmarLP/api_module/internal/user"
 	"github.com/OmarLP/api_module/pkg/authorization"
 	"github.com/OmarLP/api_module/pkg/bootstrap"
@@ -12,7 +13,7 @@ import (
 )
 
 func main() {
-	//
+	// cargando los cartificados
 	err := authorization.LoadFiles("cmd/certificates/private.pem", "cmd/certificates/public.pem")
 	if err != nil {
 		log.Fatalf("Error al cargar los certificados: %v", err)
@@ -37,6 +38,8 @@ func main() {
 	http.HandleFunc("PATCH /UpdatePassword", userEndpoint.UpdatePassword)
 	http.HandleFunc("PATCH /ResetPassword", userEndpoint.ResetPassword)
 	http.HandleFunc("POST /Login", userEndpoint.Login)
+
+	http.HandleFunc("GET /profile", middleware.AuthMiddleware(http.HandlerFunc(userEndpoint.Profile)))
 
 	// puedo mostrar un mensaje de conección exitosa con el nombre de la base de datos
 	fmt.Printf("Conected to database: %v - %s\n", db, db.Migrator().CurrentDatabase())

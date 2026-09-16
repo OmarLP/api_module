@@ -6,6 +6,8 @@ import (
 	"net/mail"
 
 	"github.com/OmarLP/api_module/internal/domain"
+	"github.com/OmarLP/api_module/internal/middleware"
+	"github.com/OmarLP/api_module/pkg/authorization"
 )
 
 type (
@@ -16,6 +18,7 @@ type (
 		UpdatePassword Controller
 		ResetPassword  Controller
 		Login          Controller
+		Profile        Controller
 	}
 
 	Response struct {
@@ -31,6 +34,7 @@ func MakeEndpoints(s Service) Endpoints {
 		UpdatePassword: makeUpdatePasswordEndpoint(s),
 		ResetPassword:  makeResetPasswordEndpoint(s),
 		Login:          makeLoginEndpoint(s),
+		Profile:        makeProfileEndpoint(s),
 	}
 }
 
@@ -221,5 +225,21 @@ func makeLoginEndpoint(s Service) Controller {
 
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(&Response{Status: 200, Data: token})
+	}
+}
+
+func makeProfileEndpoint(s Service) Controller {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// obtener los claims guardados en authmiddleware
+		claims, ok := r.Context().Value(middleware.UserKey).(*authorization.Claim)
+		if !ok {
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(&Response{Status: 500, Err: "failed to parse user context"})
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(&Response{Status: 200, Err: "access granted to protected route", Data: claims})
 	}
 }
