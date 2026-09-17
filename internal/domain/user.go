@@ -44,3 +44,13 @@ type Login struct {
 	Email    string `json:"correo" validate:"required,email"`
 	Password string `json:"clave" validate:"required"`
 }
+
+// estructuras para refresh toekn
+type LoginResponse struct {
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+}
+
+type RefreshRequest struct {
+	RefreshToken string `json:"refresh_token"`
+}

@@ -3,6 +3,7 @@ package user
 import (
 	"errors"
 	"log"
+	"time"
 
 	"github.com/OmarLP/api_module/internal/domain"
 	"github.com/OmarLP/api_module/pkg/authorization"
@@ -14,7 +15,9 @@ type (
 		CreateUser(documentNumber, email string) (*domain.User, error)
 		SetFirstPassword(recoder domain.FirstLogin) error
 		ResetPassword(req domain.ForgetPassword) error
-		Login(email, password string) (string, error)
+		Login(email, password string) (*domain.LoginResponse, error)
+		RefreshToken(refreshTokenString string) (*domain.LoginResponse, error)
+		Logout(refreshTokenStr string) error
 	}
 
 	service struct {
@@ -129,34 +132,122 @@ func (s service) ResetPassword(req domain.ForgetPassword) error {
 	return s.repo.UpdatePassword(user.IDUser, string(hashedPassword))
 }
 
-func (s service) Login(email, password string) (string, error) {
+func (s service) Login(email, password string) (*domain.LoginResponse, error) {
 	// validar que no haya error
 	user, err := s.repo.FindByEmail(email)
 	if err != nil {
-		return "", nil
+		return nil, errors.New("invalid credentials")
 	}
 
 	// validar que su cuenta este activa
 	if user.Status != 1 {
-		return "", errors.New("user account is inactive")
+		return nil, errors.New("user account is inactive")
 	}
 
 	// validar que el usuario tenga contraseña
 	if user.Password == nil {
-		return "", errors.New("you must register your initial password first")
+		return nil, errors.New("you must register your initial password first")
 	}
 
 	// comparar los passwords
 	if err := bcrypt.CompareHashAndPassword([]byte(*user.Password), []byte(password)); err != nil {
 		s.log.Println("invalid credentials:")
-		return "", errors.New("invalid credentials")
+		return nil, errors.New("invalid credentials")
 	}
 
-	token, err := authorization.GenerateToken(int64(user.IDUser), user.Email)
+	// generar Acces Token
+	accessToken, err := authorization.GenerateToken(int64(user.IDUser), user.Email)
 	if err != nil {
 		s.log.Println("error generating token:", err)
-		return "", err
+		return nil, err
 	}
 
-	return token, nil
+	// generar refresh token
+	refreshTokenString, err := authorization.GenerateRefreshToken()
+	if err != nil {
+		return nil, err
+	}
+
+	// persistir el refresh token en la bd
+	refreshToken := &domain.RefreshToken{
+		UserID:    user.IDUser,
+		Token:     refreshTokenString,
+		ExpiresAt: time.Now().Add(5 * time.Minute),
+		Revoked:   false,
+	}
+
+	if err := s.repo.SaveRefreshToken(refreshToken); err != nil {
+		return nil, errors.New("failed to save refresh token")
+	}
+
+	return &domain.LoginResponse{
+		AccessToken:  accessToken,
+		RefreshToken: refreshTokenString,
+	}, nil
+}
+
+func (s service) RefreshToken(refreshTokenString string) (*domain.LoginResponse, error) {
+	// borrar el token en la base de datos
+	token, err := s.repo.FindRefreshToken(refreshTokenString)
+	if err != nil {
+		return nil, errors.New("invalid refresh token")
+	}
+
+	// validar que no este revocado
+	if token.Revoked {
+		return nil, errors.New("refresh tokan has been revoked")
+	}
+
+	// validar fecha que expira
+	if time.Now().After(token.ExpiresAt) {
+		return nil, errors.New("refresh token has expired")
+	}
+
+	// buscar al usuario asociado y verificar el estado
+	user, err := s.repo.FindByID(token.UserID)
+	if err != nil || user.Status != 1 {
+		return nil, errors.New("user account is unavailable")
+	}
+
+	// rotacion de tokens: revocar el refresh token usado
+	if err := s.repo.RevokeRefreshToken(token.Token); err != nil {
+		return nil, err
+	}
+
+	// generar un nuevo AccessToekn y RefreshToken
+	newAccessToken, err := authorization.GenerateToken(int64(user.IDUser), user.Email)
+	if err != nil {
+		return nil, err
+	}
+
+	newRefreshTokenString, err := authorization.GenerateRefreshToken()
+	if err != nil {
+		return nil, err
+	}
+
+	newRefreshToken := &domain.RefreshToken{
+		UserID:    user.IDUser,
+		Token:     newRefreshTokenString,
+		ExpiresAt: time.Now().Add(5 * time.Minute),
+		Revoked:   false,
+	}
+
+	if err := s.repo.SaveRefreshToken(newRefreshToken); err != nil {
+		return nil, err
+	}
+
+	return &domain.LoginResponse{
+		AccessToken:  newAccessToken,
+		RefreshToken: newRefreshTokenString,
+	}, nil
+
+}
+
+// para el logout
+func (s service) Logout(refreshTokenStr string) error {
+	if refreshTokenStr == "" {
+		return errors.New("refresh token is required")
+	}
+
+	return s.repo.RevokeRefreshToken(refreshTokenStr)
 }

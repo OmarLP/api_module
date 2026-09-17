@@ -16,6 +16,11 @@ type (
 
 		FindByEmail(email string) (*domain.User, error)
 		UpdatePassword(userID int, hashedPassword string) error
+		FindByID(userID int) (*domain.User, error)
+
+		SaveRefreshToken(token *domain.RefreshToken) error
+		FindRefreshToken(tokenString string) (*domain.RefreshToken, error)
+		RevokeRefreshToken(tokenString string) error
 	}
 
 	repository struct {
@@ -80,6 +85,15 @@ func (repo *repository) FindByEmail(email string) (*domain.User, error) {
 		return nil, err
 	}
 
+	return &recoder, nil
+}
+
+func (repo *repository) FindByID(userID int) (*domain.User, error) {
+	var recoder domain.User
+	err := repo.db.Where("id_usuario = ?", userID).First(&recoder).Error
+	if err != nil {
+		return nil, err
+	}
 	return &recoder, nil
 }
 

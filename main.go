@@ -4,12 +4,14 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/OmarLP/api_module/internal/middleware"
 	"github.com/OmarLP/api_module/internal/user"
 	"github.com/OmarLP/api_module/pkg/authorization"
 	"github.com/OmarLP/api_module/pkg/bootstrap"
 	"github.com/joho/godotenv"
+	"golang.org/x/time/rate"
 )
 
 func main() {
@@ -37,9 +39,17 @@ func main() {
 	http.HandleFunc("POST /CreateUsers", userEndpoint.CreateUser)
 	http.HandleFunc("PATCH /UpdatePassword", userEndpoint.UpdatePassword)
 	http.HandleFunc("PATCH /ResetPassword", userEndpoint.ResetPassword)
-	http.HandleFunc("POST /Login", userEndpoint.Login)
+
+	// limitar /login a 5 peticiones por minuto por IP
+	loginLimiter := middleware.RateLimitMiddleware(rate.Every(12*time.Second), 5)
+
+	http.HandleFunc("POST /Login", loginLimiter(http.HandlerFunc(userEndpoint.Login)))
+
+	http.HandleFunc("POST /refresh", userEndpoint.RefreshToken)
 
 	http.HandleFunc("GET /profile", middleware.AuthMiddleware(http.HandlerFunc(userEndpoint.Profile)))
+
+	http.HandleFunc("/Logout", middleware.AuthMiddleware(http.HandlerFunc(userEndpoint.Logout)))
 
 	// puedo mostrar un mensaje de conección exitosa con el nombre de la base de datos
 	fmt.Printf("Conected to database: %v - %s\n", db, db.Migrator().CurrentDatabase())

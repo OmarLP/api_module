@@ -19,6 +19,8 @@ type (
 		ResetPassword  Controller
 		Login          Controller
 		Profile        Controller
+		RefreshToken   Controller
+		Logout         Controller
 	}
 
 	Response struct {
@@ -35,6 +37,8 @@ func MakeEndpoints(s Service) Endpoints {
 		ResetPassword:  makeResetPasswordEndpoint(s),
 		Login:          makeLoginEndpoint(s),
 		Profile:        makeProfileEndpoint(s),
+		RefreshToken:   makeRefreshTokenEndpoint(s),
+		Logout:         makeLogoutEndpoint(s),
 	}
 }
 
@@ -241,5 +245,56 @@ func makeProfileEndpoint(s Service) Controller {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(&Response{Status: 200, Err: "access granted to protected route", Data: claims})
+	}
+}
+
+func makeRefreshTokenEndpoint(s Service) Controller {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+
+		var req domain.RefreshRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(&Response{Status: 400, Err: "invalid request format"})
+			return
+		}
+
+		if req.RefreshToken == "" {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(&Response{Status: 400, Err: "refresh_token is required"})
+			return
+		}
+
+		tokenResp, err := s.RefreshToken(req.RefreshToken)
+		if err != nil {
+			w.WriteHeader(http.StatusUnauthorized)
+			json.NewEncoder(w).Encode(&Response{Status: 401, Err: err.Error()})
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(&Response{Status: 200, Data: tokenResp})
+	}
+}
+
+func makeLogoutEndpoint(s Service) Controller {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+
+		var req domain.RefreshRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(&Response{Status: 400, Err: "invalid request format"})
+			return
+		}
+
+		if err := s.Logout(req.RefreshToken); err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(&Response{Status: 400, Err: err.Error()})
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(&Response{Status: 200, Data: "session closed successfully"})
 	}
 }
