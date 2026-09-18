@@ -21,7 +21,7 @@ func GenerateToken(userID int64, email string) (string, error) {
 		UserID: userID,
 		Email:  email,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(1 * time.Minute)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(2 * time.Minute)),
 			Issuer:    "api-module",
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},

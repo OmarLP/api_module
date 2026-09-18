@@ -49,7 +49,7 @@ func main() {
 
 	http.HandleFunc("GET /profile", middleware.AuthMiddleware(http.HandlerFunc(userEndpoint.Profile)))
 
-	http.HandleFunc("/Logout", middleware.AuthMiddleware(http.HandlerFunc(userEndpoint.Logout)))
+	http.HandleFunc("POST /Logout", middleware.AuthMiddleware(http.HandlerFunc(userEndpoint.Logout)))
 
 	// puedo mostrar un mensaje de conección exitosa con el nombre de la base de datos
 	fmt.Printf("Conected to database: %v - %s\n", db, db.Migrator().CurrentDatabase())

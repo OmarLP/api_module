@@ -18,6 +18,7 @@ type (
 		Login(email, password string) (*domain.LoginResponse, error)
 		RefreshToken(refreshTokenString string) (*domain.LoginResponse, error)
 		Logout(refreshTokenStr string) error
+		GetProfile(userID int) (*domain.UserProfileResponse, error)
 	}
 
 	service struct {
@@ -250,4 +251,14 @@ func (s service) Logout(refreshTokenStr string) error {
 	}
 
 	return s.repo.RevokeRefreshToken(refreshTokenStr)
+}
+
+// para el profile
+func (s service) GetProfile(userID int) (*domain.UserProfileResponse, error) {
+	profile, err := s.repo.GetUserProfileByID(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return profile, nil
 }

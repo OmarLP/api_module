@@ -54,3 +54,9 @@ type LoginResponse struct {
 type RefreshRequest struct {
 	RefreshToken string `json:"refresh_token"`
 }
+
+type UserProfileResponse struct {
+	ApellidoPaterno string `json:"apellido_paterno_registrador" gorm:"column:apellido_paterno_registrador"`
+	Nombres         string `json:"nombres_registrador" gorm:"column:nombres_registrador"`
+	Correo          string `json:"correo" gorm:"column:correo"`
+}

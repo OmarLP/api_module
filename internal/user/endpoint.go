@@ -242,9 +242,16 @@ func makeProfileEndpoint(s Service) Controller {
 			return
 		}
 
+		profile, err := s.GetProfile(int(claims.UserID))
+		if err != nil {
+			w.WriteHeader(http.StatusNotFound)
+			json.NewEncoder(w).Encode(&Response{Status: 404, Err: err.Error()})
+			return
+		}
+
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(&Response{Status: 200, Err: "access granted to protected route", Data: claims})
+		json.NewEncoder(w).Encode(&Response{Status: 200, Data: profile})
 	}
 }
 

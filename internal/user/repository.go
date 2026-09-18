@@ -21,6 +21,8 @@ type (
 		SaveRefreshToken(token *domain.RefreshToken) error
 		FindRefreshToken(tokenString string) (*domain.RefreshToken, error)
 		RevokeRefreshToken(tokenString string) error
+
+		GetUserProfileByID(userID int) (*domain.UserProfileResponse, error)
 	}
 
 	repository struct {
@@ -128,4 +130,21 @@ func (repo *repository) RevokeRefreshToken(tokenString string) error {
 	return repo.db.Model(&domain.RefreshToken{}).
 		Where("token = ?", tokenString).
 		Update("revoked", true).Error
+}
+
+// obtener datos de usuario para perfil
+func (repo *repository) GetUserProfileByID(userID int) (*domain.UserProfileResponse, error) {
+	var profile domain.UserProfileResponse
+
+	err := repo.db.Table("usuarios u").
+		Select("r.apellido_paterno_registrador, split_part(r.nombres_registrador, ' ', 1) as nombres_registrador, u.correo").
+		Joins("join mstr_registrador r on(u.id_registrador = r.id_registrador)").
+		Where("u.id_usuario = ?", userID).
+		Scan(&profile).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &profile, nil
 }
