@@ -47,8 +47,10 @@ type Login struct {
 
 // estructuras para refresh toekn
 type LoginResponse struct {
-	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"`
+	AccessToken           string `json:"access_token"`
+	RefreshToken          string `json:"refresh_token"`
+	RequiresPasswordSetup bool   `json:"requires_password_setup"`
+	Email                 string `json:"correo,omitempty"`
 }
 
 type RefreshRequest struct {

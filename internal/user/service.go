@@ -15,7 +15,7 @@ type (
 		CreateUser(documentNumber, email string) (*domain.User, error)
 		SetFirstPassword(recoder domain.FirstLogin) error
 		ResetPassword(req domain.ForgetPassword) error
-		Login(email, password string) (*domain.LoginResponse, error)
+		Login(email, password string) (*domain.LoginResponse, bool, error)
 		RefreshToken(refreshTokenString string) (*domain.LoginResponse, error)
 		Logout(refreshTokenStr string) error
 		GetProfile(userID int) (*domain.UserProfileResponse, error)
@@ -133,40 +133,40 @@ func (s service) ResetPassword(req domain.ForgetPassword) error {
 	return s.repo.UpdatePassword(user.IDUser, string(hashedPassword))
 }
 
-func (s service) Login(email, password string) (*domain.LoginResponse, error) {
+func (s service) Login(email, password string) (*domain.LoginResponse, bool, error) {
 	// validar que no haya error
 	user, err := s.repo.FindByEmail(email)
 	if err != nil {
-		return nil, errors.New("invalid credentials")
+		return nil, false, errors.New("invalid credentials")
 	}
 
 	// validar que su cuenta este activa
 	if user.Status != 1 {
-		return nil, errors.New("user account is inactive")
+		return nil, false, errors.New("user account is inactive")
 	}
 
 	// validar que el usuario tenga contraseña
-	if user.Password == nil {
-		return nil, errors.New("you must register your initial password first")
+	if user.Password == nil || *user.Password == "" {
+		return nil, true, nil
 	}
 
 	// comparar los passwords
 	if err := bcrypt.CompareHashAndPassword([]byte(*user.Password), []byte(password)); err != nil {
 		s.log.Println("invalid credentials:")
-		return nil, errors.New("invalid credentials")
+		return nil, false, errors.New("invalid credentials")
 	}
 
 	// generar Acces Token
 	accessToken, err := authorization.GenerateToken(int64(user.IDUser), user.Email)
 	if err != nil {
 		s.log.Println("error generating token:", err)
-		return nil, err
+		return nil, false, err
 	}
 
 	// generar refresh token
 	refreshTokenString, err := authorization.GenerateRefreshToken()
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	// persistir el refresh token en la bd
@@ -178,13 +178,13 @@ func (s service) Login(email, password string) (*domain.LoginResponse, error) {
 	}
 
 	if err := s.repo.SaveRefreshToken(refreshToken); err != nil {
-		return nil, errors.New("failed to save refresh token")
+		return nil, false, errors.New("failed to save refresh token")
 	}
 
 	return &domain.LoginResponse{
 		AccessToken:  accessToken,
 		RefreshToken: refreshTokenString,
-	}, nil
+	}, false, nil
 }
 
 func (s service) RefreshToken(refreshTokenString string) (*domain.LoginResponse, error) {

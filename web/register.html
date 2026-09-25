@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Usuario</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h2>Crear Cuenta</h2>
+        <form id="registerForm">
+            <div class="form-group">
+                <label for="documentNumber">Número de Documento (DNI):</label>
+                <input type="text" id="documentNumber" required placeholder="12345678">
+            </div>
+            <div class="form-group">
+                <label for="regCorreo">Correo electrónico:</label>
+                <input type="email" id="regCorreo" required placeholder="correo@ejemplo.com">
+            </div>
+            <button type="submit" id="btnRegister">Registrarme</button>
+        </form>
+        <p id="regMsg" class="error"></p>
+
+        <div class="auth-links">
+            <p>¿Ya tienes cuenta? <a href="/login">Inicia sesión</a></p>
+        </div>
+    </div>
+
+    <script type="module" src="/static/js/app.js"></script>
+</body>
+</html>

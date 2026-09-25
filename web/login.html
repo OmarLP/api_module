@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesió</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h2>Iniciar Sesión</h2>
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="correo">Correo electrónico:</label>
+                <input type="email" id="correo" required placeholder="correo@ejemplo.com">
+            </div>
+            <div class="form-group">
+                <label for="clave">Contraseña:</label>
+                <input type="password" id="clave" placeholder="••••••••">
+            </div>
+            <button type="submit" id="btnLogin">Ingresar</button>
+        </form>
+        <p id="errorMsg" class="error"></p>
+
+        <div class="auth-links">
+            <p>¿No tienes cuenta? <a href="/register">Registrate</a></p>
+            <p><a href="/reset-password">¿Olvidaste tu contraseña?</a></p>
+        </div>
+    </div>
+
+    <!-- cargamnos el cliente API y lógica del login -->
+    <script type="module" src="/static/js/app.js"></script>
+</body>
+</html>

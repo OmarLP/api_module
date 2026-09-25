@@ -8,6 +8,7 @@ import (
 	"github.com/OmarLP/api_module/internal/domain"
 	"github.com/OmarLP/api_module/internal/middleware"
 	"github.com/OmarLP/api_module/pkg/authorization"
+	"github.com/OmarLP/api_module/pkg/utils"
 )
 
 type (
@@ -194,6 +195,11 @@ func makeLoginEndpoint(s Service) Controller {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
+		if r.Method != http.MethodPost {
+			utils.RespondError(w, http.StatusMethodNotAllowed, "method not allowed")
+			return
+		}
+
 		var req domain.Login
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			w.WriteHeader(http.StatusBadRequest)
@@ -214,21 +220,39 @@ func makeLoginEndpoint(s Service) Controller {
 			return
 		}
 
-		if req.Password == "" {
-			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(&Response{Status: 400, Err: "password is required"})
-			return
-		}
+		// if req.Password == "" {
+		// 	w.WriteHeader(http.StatusBadRequest)
+		// 	json.NewEncoder(w).Encode(&Response{Status: 400, Err: "password is required"})
+		// 	return
+		// }
 
-		token, err := s.Login(req.Email, req.Password)
+		token, isFirstLogin, err := s.Login(req.Email, req.Password)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
-			json.NewEncoder(w).Encode(&Response{Status: 401, Err: "invalid credentials"})
+			json.NewEncoder(w).Encode(&Response{Status: 401, Err: err.Error()})
 			return
 		}
 
+		// primer inicio
+		if isFirstLogin {
+			w.WriteHeader(http.StatusOK)
+			json.NewEncoder(w).Encode(&Response{
+				Status: 200,
+				Data: domain.LoginResponse{
+					RequiresPasswordSetup: true,
+					Email:                 req.Email,
+				},
+			})
+			return
+		}
+
+		// inicio regular
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(&Response{Status: 200, Data: token})
+		json.NewEncoder(w).Encode(&Response{Status: 200, Data: domain.LoginResponse{
+			AccessToken:           token.AccessToken,
+			RefreshToken:          token.RefreshToken,
+			RequiresPasswordSetup: false,
+		}})
 	}
 }
 
