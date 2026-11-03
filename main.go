@@ -11,6 +11,7 @@ import (
 
 	"github.com/OmarLP/api_module/internal/middleware"
 	"github.com/OmarLP/api_module/internal/user"
+	"github.com/OmarLP/api_module/internal/verticalreport"
 	"github.com/OmarLP/api_module/pkg/authorization"
 	"github.com/OmarLP/api_module/pkg/bootstrap"
 	"github.com/joho/godotenv"
@@ -88,6 +89,12 @@ func main() {
 	http.HandleFunc("POST /api/refresh", userEndpoint.RefreshToken)
 	http.HandleFunc("GET /api/profile", middleware.AuthMiddleware(http.HandlerFunc(userEndpoint.Profile)))
 	http.HandleFunc("POST /api/logout", middleware.AuthMiddleware(http.HandlerFunc(userEndpoint.Logout)))
+
+	// rutas para buscar id cita
+	verticalreportRepo := verticalreport.NewRepository(l, db)
+	verticalreportService := verticalreport.NewService(l, verticalreportRepo)
+	verticalreportEndpoint := verticalreport.MakeEndpoints(verticalreportService)
+	http.HandleFunc("GET /api/buscar", verticalreportEndpoint.BuscarIdCita)
 
 	// puedo mostrar un mensaje de conección exitosa con el nombre de la base de datos
 	fmt.Printf("Conected to database: %v - %s\n", db, db.Migrator().CurrentDatabase())

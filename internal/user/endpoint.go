@@ -77,8 +77,8 @@ func makeCreateUserEndpoint(s Service) Controller {
 
 		user, err := s.CreateUser(req.DocumentNumber, req.Email)
 		if err != nil {
-			w.WriteHeader(400)
-			json.NewEncoder(w).Encode(&Response{Status: 400, Err: err.Error()})
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(&Response{Status: 500, Err: err.Error()})
 			return
 		}
 
