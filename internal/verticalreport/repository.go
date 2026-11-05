@@ -10,7 +10,8 @@ import (
 
 type (
 	Repository interface {
-		BuscarIdCita(req domain.BuscarIdCita) ([]domain.VerticalReport, error)
+		BuscarIdCita(req domain.BuscarIdCita, offset, limit int64) ([]domain.VerticalReport, error)
+		Count(req domain.BuscarIdCita) (int64, error)
 	}
 
 	repository struct {
@@ -26,7 +27,7 @@ func NewRepository(log *log.Logger, db *gorm.DB) Repository {
 	}
 }
 
-func (repo *repository) BuscarIdCita(req domain.BuscarIdCita) ([]domain.VerticalReport, error) {
+func (repo *repository) BuscarIdCita(req domain.BuscarIdCita, offset, limit int64) ([]domain.VerticalReport, error) {
 	// acá voy a colocar mis resultados
 	var resultados []domain.VerticalReport
 
@@ -51,4 +52,33 @@ func (repo *repository) BuscarIdCita(req domain.BuscarIdCita) ([]domain.Vertical
 
 	return resultados, nil
 
+}
+
+func (repo *repository) Count(req domain.BuscarIdCita) (int64, error) {
+	var total int64
+
+	// Envolvemos tu función de postgres en un SELECT COUNT(*)
+	query := `
+        SELECT COUNT(*) 
+        FROM fc_buscar_idcita(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `
+
+	err := repo.db.Raw(query,
+		req.Anio,
+		req.MesInicio,
+		req.MesFinal,
+		req.Red,
+		req.Microred,
+		req.PdDigitacion,
+		req.Establecimiento,
+		req.CursoVida,
+		req.CieCpm,
+		req.Documento,
+	).Scan(&total).Error
+
+	if err != nil {
+		return 0, fmt.Errorf("error al contar registros: %w", err)
+	}
+
+	return total, nil
 }
