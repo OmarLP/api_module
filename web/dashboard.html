@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Principal - Dashboard</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <div class="dashboard-layout">
+        
+        <!-- ================= SIDEBAR (Menú Lateral) ================= -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <h2>Opciones</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="/dashboard" class="nav-link active">Inicio</a></li>
+                    
+                    <!-- Menú Desplegable de Reportes -->
+                    <li class="nav-dropdown">
+                        <span class="dropdown-toggle">Reportes ▾</span>
+                        <ul class="dropdown-menu">
+                            <li><a href="/vertical-report" id="menuReporteVertical">Reporte Vertical</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- ================= CONTENEDOR PRINCIPAL ================= -->
+        <div class="main-wrapper">
+            
+            <!-- Topbar (Perfil de usuario y acciones) -->
+            <header class="topbar">
+                
+
+                <div class="topbar-left">
+                    <button id="sidebarToggle" class="btn-toggle">☰</button>
+                    <span id="sectionTitle"></span>
+                </div>
+                
+                <!-- Perfil de usuario (Esquina superior derecha) -->
+                <div class="user-profile-widget">
+                    <div class="user-info">
+                        <span id="userName" class="user-name">Cargando...</span>
+                        <span id="userEmail" class="user-email">...</span>
+                    </div>
+                    <button id="btnLogout" class="btn-logout">Cerrar Sesión</button>
+                </div>
+            </header>
+
+            <!-- Área de Trabajo Central (Aquí se cargarán dinámicamente las vistas) -->
+            <main class="content-area" id="contentArea">
+                <div class="welcome-card">
+                    <h3>Bienvenido al Sistema</h3>
+                    <p>Selecciona una opción del menú lateral para comenzar a trabajar.</p>
+                </div>
+            </main>
+        </div>
+
+    </div>
+
+    <script type="module" src="/static/js/app.js"></script>
+</body>
+</html>

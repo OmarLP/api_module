@@ -66,3 +66,10 @@ type BuscarIdCita struct {
 	CieCpm          string `json:"cie_cmp_p"`
 	Documento       string `json:"documento_p"`
 }
+
+// estructura para filtros en cascada
+type QueryFilters struct {
+	Red          string `json:"red"`
+	Microred     string `json:"microred"`
+	PdDigitacion string `json:"pd_digitacion"`
+}

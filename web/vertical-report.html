@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reporte Vertical - Sistema SIG</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+
+<body>
+    <div class="dashboard-layout">
+
+        <!-- SIDEBAR (Menú lateral ya existente) -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <h2>Sistema SIG</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="/dashboard">Inicio</a></li>
+                    <li class="nav-dropdown open">
+                        <span class="dropdown-toggle">Reportes ▾</span>
+                        <ul class="dropdown-menu" style="max-height: 200px;">
+                            <li><a href="/vertical-report" class="active">Reporte Vertical</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- CONTENEDOR PRINCIPAL -->
+        <div class="main-wrapper">
+            <header class="topbar">
+                <div class="topbar-left">
+                    <button id="sidebarToggle" class="btn-toggle">☰</button>
+                    <span id="sectionTitle">Gestión de Reportes / Reporte Vertical</span>
+                </div>
+                <div class="user-profile-widget">
+                    <div class="user-info">
+                        <span id="userName" class="user-name">Cargando...</span>
+                        <span id="userEmail" class="user-email">...</span>
+                    </div>
+                    <button id="btnLogout" class="btn-logout">Cerrar Sesión</button>
+                </div>
+            </header>
+
+            <main class="content-area">
+                <div class="filter-card">
+                    <h3>Filtros de Búsqueda</h3>
+
+                    <!-- Formulario de Filtros en Cascada -->
+                    <form id="filterForm" class="filter-grid">
+
+                        <!-- Año -->
+                        <div class="form-group">
+                            <label for="inputAnio">Año</label>
+                            <input type="text" id="inputAnio" name="anio" value="2026">
+                        </div>
+
+                        <!-- Mes Inicio y Mes Final -->
+                        <div class="form-group">
+                            <label for="inputMesInicio">Mes Inicio</label>
+                            <input type="text" id="inputMesInicio" name="mes_inicio" value="1" placeholder="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="inputMesFinal">Mes Final</label>
+                            <input type="text" id="inputMesFinal" name="mes_final" value="12" placeholder="12">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="selectRed">Red</label>
+                            <select id="selectRed" name="red">
+                                <option value="">-- Seleccione Red --</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="selectMicrored">Microred</label>
+                            <select id="selectMicrored" name="microred" disabled>
+                                <option value="">-- Seleccione Microred --</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="selectPd">Punto de Digitación</label>
+                            <select id="selectPd" name="pd_digitacion" disabled>
+                                <option value="">-- Seleccione P. Digitacion --</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="selectEstablecimiento">Establecimiento</label>
+                            <select id="selectEstablecimiento" name="establecimiento" disabled>
+                                <option value="">-- Seleccione Establecimiento --</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="selectCursoVida">Curso de vida</label>
+                            <select id="selectCursoVida" name="curso_de_vida">
+                                <option value="">-- Curso de Vida --</option>
+
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="inputCieCpm">Cie -Cpms</label>
+                            <input type="text" id="inputCieCpm" name="CieCpm" placeholder="Ej: Z001">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="inputDocumento">Documento</label>
+                            <input type="text" id="inputDocumento" name="documento" placeholder="Ej. 12345678">
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn-primary">Buscar Citas</button>
+                            <button type="button" id="btnReset" class="btn-secondary">Limpiar</button>
+                            <button type="button" id="btnExportar" class="btn-primary" style="background-color: #10b981; margin-left: 10px;">
+                                Exportar a Excel
+                            </button>
+                        </div>
+
+                    </form>
+                </div>
+
+                <!-- Tabla de Resultados -->
+                <div class="results-card">
+                    <h3>Resultados</h3>
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>id_cita</th>
+                                    <th>anio</th>
+                                    <th>mes</th>
+                                    <th>dia</th>
+                                    <th>lote</th>
+                                    <th>pag</th>
+                                    <th>reg</th>
+                                    <th>codigo_eess</th>
+                                    <th>eess</th>
+                                    <th>id_pac</th>
+                                    <th>documento</th>
+                                    <th>nombre_persona</th>
+                                    <th>genero</th>
+                                    <th>cond_eess</th>
+                                    <th>cond_serv</th>
+                                    <th>edad_reg</th>
+                                    <th>tipo_edad</th>
+                                    <th>codigo_dx</th>
+                                    <th>tipo_dx</th>
+                                    <th>valor_lab</th>
+                                    <th>orden_dx</th>
+                                    <th>orden_lab</th>
+                                    <th>peso</th>
+                                    <th>talla</th>
+                                    <th>hb</th>
+                                    <th>per_abdominal</th>
+                                    <th>per_cefalico</th>
+                                    <th>condicion</th>
+                                    <th>fur</th>
+                                    <th>personal_salud</th>
+                                    <th>registrador</th>
+                                    <th>fecha_registro</th>
+                                    <th>fecha_modificacion</th>
+                                </tr>
+                            </thead>
+                            <tbody id="resultsBody">
+                                <tr>
+                                    <td colspan="6" class="text-center">Utiliza los filtros y presiona "Buscar Citas".
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <!-- Controles de Paginación -->
+                <div class="pagination-container" id="paginationContainer">
+                    <button type="button" id="btnPrev" class="btn-secondary" disabled>Anterior</button>
+                    <span id="pageInfo">Página 1 de 1</span>
+                    <button type="button" id="btnNext" class="btn-secondary" disabled>Siguiente</button>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Script principal de la aplicación -->
+    <script type="module" src="/static/js/app.js"></script>
+</body>
+
+</html>

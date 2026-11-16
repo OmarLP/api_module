@@ -10,6 +10,15 @@ type (
 	Service interface {
 		BuscarIdCita(req domain.BuscarIdCita, offset, limit int64) ([]domain.VerticalReport, error)
 		Count(req domain.BuscarIdCita) (int64, error)
+
+		// filtros en cascada
+		GetRedes() ([]string, error)
+		GetMicroredes(red string) ([]string, error)
+		GetPdDigitaciones(red, microred string) ([]string, error)
+		GetEstablecimientos(red, microred, pdDigitacion string) ([]string, error)
+
+		GetCursoVida() ([]string, error)
+		ExportarBuscarIdCita(req domain.BuscarIdCita) ([]domain.VerticalReport, error)
 	}
 
 	service struct {
@@ -24,6 +33,36 @@ func NewService(log *log.Logger, repo Repository) Service {
 		log:  log,
 		repo: repo,
 	}
+}
+
+func (s service) GetCursoVida() ([]string, error) {
+	return s.repo.GetCursoVida()
+}
+
+func (s service) GetRedes() ([]string, error) {
+	return s.repo.GetRedes()
+}
+
+func (s service) GetMicroredes(red string) ([]string, error) {
+	return s.repo.GetMicroredes(red)
+}
+
+func (s service) GetPdDigitaciones(red, microred string) ([]string, error) {
+	return s.repo.GetPdDigitaciones(red, microred)
+}
+
+func (s service) GetEstablecimientos(red, microred, pdDigitacion string) ([]string, error) {
+	return s.repo.GetEstablecimientos(red, microred, pdDigitacion)
+}
+
+func (s service) ExportarBuscarIdCita(req domain.BuscarIdCita) ([]domain.VerticalReport, error) {
+	resultados, err := s.repo.ExportarBuscarIdCita(req)
+	if err != nil {
+		s.log.Printf("Error al consultar el repositorio: %v", err)
+		return nil, err
+	}
+
+	return resultados, nil
 }
 
 func (s service) BuscarIdCita(req domain.BuscarIdCita, offset, limit int64) ([]domain.VerticalReport, error) {

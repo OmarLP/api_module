@@ -66,10 +66,12 @@ func main() {
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.FS(staticContent))))
 	// mapear rutas limpias
 	http.HandleFunc("GET /login", serveHTML(webContent, "login.html"))
-	http.HandleFunc("GET /profile", serveHTML(webContent, "profile.html"))
+	http.HandleFunc("GET /dashboard", serveHTML(webContent, "dashboard.html"))
 	http.HandleFunc("GET /register", serveHTML(webContent, "register.html"))
 	http.HandleFunc("GET /reset-password", serveHTML(webContent, "reset-password.html"))
 	http.HandleFunc("GET /update-password", serveHTML(webContent, "update-password.html"))
+	http.HandleFunc("GET /vertical-report", serveHTML(webContent, "vertical-report.html"))
+
 	// mapear la raiz a login
 	http.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/" {
@@ -94,7 +96,16 @@ func main() {
 	verticalreportRepo := verticalreport.NewRepository(l, db)
 	verticalreportService := verticalreport.NewService(l, verticalreportRepo)
 	verticalreportEndpoint := verticalreport.MakeEndpoints(verticalreportService)
-	http.HandleFunc("GET /api/buscar", verticalreportEndpoint.BuscarIdCita)
+	http.HandleFunc("POST /api/buscar", middleware.AuthMiddleware(http.HandlerFunc(verticalreportEndpoint.BuscarIdCita)))
+	http.HandleFunc("POST /api/reportes/exportar", middleware.AuthMiddleware(http.HandlerFunc(verticalreportEndpoint.ExportarBuscarIdCita)))
+
+	// rutas para el filtro en cascada
+	// Rutas para los catálogos en cascada del Reporte Vertical
+	http.HandleFunc("GET /api/reportes/redes", middleware.AuthMiddleware(http.HandlerFunc(verticalreportEndpoint.GetRedes)))
+	http.HandleFunc("GET /api/reportes/microredes", middleware.AuthMiddleware(http.HandlerFunc(verticalreportEndpoint.GetMicroredes)))
+	http.HandleFunc("GET /api/reportes/pd-digitacion", middleware.AuthMiddleware(http.HandlerFunc(verticalreportEndpoint.GetPdDigitaciones)))
+	http.HandleFunc("GET /api/reportes/establecimientos", middleware.AuthMiddleware(http.HandlerFunc(verticalreportEndpoint.GetEstablecimientos)))
+	http.HandleFunc("GET /api/reportes/curso-vida", middleware.AuthMiddleware(http.HandlerFunc(verticalreportEndpoint.GetCursoVida)))
 
 	// puedo mostrar un mensaje de conección exitosa con el nombre de la base de datos
 	fmt.Printf("Conected to database: %v - %s\n", db, db.Migrator().CurrentDatabase())
