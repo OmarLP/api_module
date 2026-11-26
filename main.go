@@ -71,6 +71,7 @@ func main() {
 	http.HandleFunc("GET /reset-password", serveHTML(webContent, "reset-password.html"))
 	http.HandleFunc("GET /update-password", serveHTML(webContent, "update-password.html"))
 	http.HandleFunc("GET /vertical-report", serveHTML(webContent, "vertical-report.html"))
+	http.HandleFunc("GET /filter-report", serveHTML(webContent, "filter-report.html"))
 
 	// mapear la raiz a login
 	http.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
@@ -98,6 +99,9 @@ func main() {
 	verticalreportEndpoint := verticalreport.MakeEndpoints(verticalreportService)
 	http.HandleFunc("POST /api/buscar", middleware.AuthMiddleware(http.HandlerFunc(verticalreportEndpoint.BuscarIdCita)))
 	http.HandleFunc("POST /api/reportes/exportar", middleware.AuthMiddleware(http.HandlerFunc(verticalreportEndpoint.ExportarBuscarIdCita)))
+
+	http.HandleFunc("POST /api/buscaespecifica", middleware.AuthMiddleware(http.HandlerFunc(verticalreportEndpoint.BuscaEspecifica)))
+	http.HandleFunc("POST /api/reportes/exportarbusca", middleware.AuthMiddleware(http.HandlerFunc(verticalreportEndpoint.ExportarBuscaEspecifica)))
 
 	// rutas para el filtro en cascada
 	// Rutas para los catálogos en cascada del Reporte Vertical

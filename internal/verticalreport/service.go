@@ -11,6 +11,10 @@ type (
 		BuscarIdCita(req domain.BuscarIdCita, offset, limit int64) ([]domain.VerticalReport, error)
 		Count(req domain.BuscarIdCita) (int64, error)
 
+		BuscaEspecifica(req domain.BuscaEspecifica, offset, limit int64) ([]domain.VerticalReport, error)
+		CountBE(req domain.BuscaEspecifica) (int64, error)
+		ExportarBuscaEspecifica(req domain.BuscaEspecifica) ([]domain.VerticalReport, error)
+
 		// filtros en cascada
 		GetRedes() ([]string, error)
 		GetMicroredes(red string) ([]string, error)
@@ -87,4 +91,34 @@ func (s service) Count(req domain.BuscarIdCita) (int64, error) {
 
 	return count, nil
 
+}
+
+func (s service) BuscaEspecifica(req domain.BuscaEspecifica, offset, limit int64) ([]domain.VerticalReport, error) {
+	// llamar al repositorio para buscar id cita
+	resultados, err := s.repo.BuscaEspecifica(req, offset, limit)
+	if err != nil {
+		s.log.Printf("Error al consultar el repositorio: %v", err)
+		return nil, err
+	}
+
+	return resultados, nil
+}
+
+func (s service) CountBE(req domain.BuscaEspecifica) (int64, error) {
+	count, err := s.repo.CountBE(req)
+	if err != nil {
+		s.log.Printf("Error al calcular los registros en el repositorio: %v", err)
+		return 0, err
+	}
+	return count, nil
+}
+
+func (s service) ExportarBuscaEspecifica(req domain.BuscaEspecifica) ([]domain.VerticalReport, error) {
+	resultados, err := s.repo.ExportarBuscaEspecifica(req)
+	if err != nil {
+		s.log.Printf("Error al consultar el repositorio: %w", err)
+		return nil, err
+	}
+
+	return resultados, nil
 }

@@ -67,6 +67,22 @@ type BuscarIdCita struct {
 	Documento       string `json:"documento_p"`
 }
 
+// estructura para busqueda especifica
+type BuscaEspecifica struct {
+	Anio            int    `json:"anio_p" `
+	MesInicio       int    `json:"mes_inicio"`
+	MesFinal        int    `json:"mes_final"`
+	Red             string `json:"red_p"`
+	Microred        string `json:"microred_p"`
+	PdDigitacion    string `json:"pd_digitacion_p"`
+	Establecimiento string `json:"establecimiento_p"`
+	IdCita          int    `json:"id_cita_p"`
+	App             string `json:"app_p"`
+	Documento       string `json:"documento_p"`
+	CieCpm          string `json:"cie_cmp_p"`
+	Lab             string `json:"lab_p"`
+}
+
 // estructura para filtros en cascada
 type QueryFilters struct {
 	Red          string `json:"red"`

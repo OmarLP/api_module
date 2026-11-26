@@ -331,8 +331,11 @@ if(resetPasswordForm) {
     });
 }
 
-// --- LÓGICA DE SELECTS EN CASCADA PARA REPORTE VERTICAL ---
-if (window.location.pathname === '/vertical-report') {
+// --- LÓGICA DE SELECTS EN CASCADA (REPORTE VERTICAL Y BÚSQUEDA ESPECÍFICA) ---
+const esReporteVertical = window.location.pathname === '/vertical-report';
+const esBusquedaEspecifica = window.location.pathname === '/filter-report';
+
+if (esReporteVertical || esBusquedaEspecifica) {
     const selectRed = document.getElementById('selectRed');
     const selectMicrored = document.getElementById('selectMicrored');
     const selectPd = document.getElementById('selectPd');
@@ -342,12 +345,13 @@ if (window.location.pathname === '/vertical-report') {
 
     // 1. Cargar Redes al iniciar la página
     async function cargarRedes() {
+        if (!selectRed) return;
         try {
             const res = await fetch('/api/reportes/redes', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const json = await res.json();
-            if (res.ok) {
+            if (res.ok && Array.isArray(json.data)) {
                 json.data.forEach(red => {
                     const opt = document.createElement('option');
                     opt.value = red;
@@ -361,267 +365,283 @@ if (window.location.pathname === '/vertical-report') {
     }
 
     // Evento Red -> Carga Microredes
-    selectRed.addEventListener('change', async () => {
-        const redVal = selectRed.value;
-        
-        // Resetear dependientes
-        selectMicrored.innerHTML = '<option value="">-- Seleccione Microred --</option>';
-        selectMicrored.disabled = !redVal;
-        selectPd.innerHTML = '<option value="">-- Seleccione P. Digitacion --</option>';
-        selectPd.disabled = true;
-        selectEstablecimiento.innerHTML = '<option value="">-- Seleccione Establecimiento --</option>';
-        selectEstablecimiento.disabled = true;
+    if (selectRed) {
+        selectRed.addEventListener('change', async () => {
+            const redVal = selectRed.value;
 
-        if (!redVal) return;
+            selectMicrored.innerHTML = '<option value="">-- Seleccione Microred --</option>';
+            selectMicrored.disabled = !redVal;
+            selectPd.innerHTML = '<option value="">-- Seleccione P. Digitacion --</option>';
+            selectPd.disabled = true;
+            selectEstablecimiento.innerHTML = '<option value="">-- Seleccione Establecimiento --</option>';
+            selectEstablecimiento.disabled = true;
 
-        try {
-            const res = await fetch(`/api/reportes/microredes?red=${encodeURIComponent(redVal)}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const json = await res.json();
-            if (res.ok) {
-                json.data.forEach(mr => {
-                    const opt = document.createElement('option');
-                    opt.value = mr;
-                    opt.textContent = mr;
-                    selectMicrored.appendChild(opt);
+            if (!redVal) return;
+
+            try {
+                const res = await fetch(`/api/reportes/microredes?red=${encodeURIComponent(redVal)}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
                 });
+                const json = await res.json();
+                if (res.ok && Array.isArray(json.data)) {
+                    json.data.forEach(mr => {
+                        const opt = document.createElement('option');
+                        opt.value = mr;
+                        opt.textContent = mr;
+                        selectMicrored.appendChild(opt);
+                    });
+                }
+            } catch (err) {
+                console.error('Error cargando microredes:', err);
             }
-        } catch (err) {
-            console.error('Error cargando microredes:', err);
-        }
-    });
+        });
+    }
 
     // Evento Microred -> Carga Puntos de Digitación
-    selectMicrored.addEventListener('change', async () => {
-        const redVal = selectRed.value;
-        const mrVal = selectMicrored.value;
+    if (selectMicrored) {
+        selectMicrored.addEventListener('change', async () => {
+            const redVal = selectRed.value;
+            const mrVal = selectMicrored.value;
 
-        selectPd.innerHTML = '<option value="">-- Seleccione P. Digitacion --</option>';
-        selectPd.disabled = !mrVal;
-        selectEstablecimiento.innerHTML = '<option value="">-- Seleccione Establecimiento --</option>';
-        selectEstablecimiento.disabled = true;
+            selectPd.innerHTML = '<option value="">-- Seleccione P. Digitacion --</option>';
+            selectPd.disabled = !mrVal;
+            selectEstablecimiento.innerHTML = '<option value="">-- Seleccione Establecimiento --</option>';
+            selectEstablecimiento.disabled = true;
 
-        if (!mrVal) return;
+            if (!mrVal) return;
 
-        try {
-            const res = await fetch(`/api/reportes/pd-digitacion?red=${encodeURIComponent(redVal)}&microred=${encodeURIComponent(mrVal)}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const json = await res.json();
-            if (res.ok) {
-                json.data.forEach(pd => {
-                    const opt = document.createElement('option');
-                    opt.value = pd;
-                    opt.textContent = pd;
-                    selectPd.appendChild(opt);
+            try {
+                const res = await fetch(`/api/reportes/pd-digitacion?red=${encodeURIComponent(redVal)}&microred=${encodeURIComponent(mrVal)}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
                 });
+                const json = await res.json();
+                if (res.ok && Array.isArray(json.data)) {
+                    json.data.forEach(pd => {
+                        const opt = document.createElement('option');
+                        opt.value = pd;
+                        opt.textContent = pd;
+                        selectPd.appendChild(opt);
+                    });
+                }
+            } catch (err) {
+                console.error('Error cargando puntos de digitación:', err);
             }
-        } catch (err) {
-            console.error('Error cargando puntos de digitación:', err);
-        }
-    });
+        });
+    }
 
     // Evento P. Digitacion -> Carga Establecimientos
-    selectPd.addEventListener('change', async () => {
-        const redVal = selectRed.value;
-        const mrVal = selectMicrored.value;
-        const pdVal = selectPd.value;
+    if (selectPd) {
+        selectPd.addEventListener('change', async () => {
+            const redVal = selectRed.value;
+            const mrVal = selectMicrored.value;
+            const pdVal = selectPd.value;
 
-        selectEstablecimiento.innerHTML = '<option value="">-- Seleccione Establecimiento --</option>';
-        selectEstablecimiento.disabled = !pdVal;
+            selectEstablecimiento.innerHTML = '<option value="">-- Seleccione Establecimiento --</option>';
+            selectEstablecimiento.disabled = !pdVal;
 
-        if (!pdVal) return;
+            if (!pdVal) return;
 
-        try {
-            const res = await fetch(`/api/reportes/establecimientos?red=${encodeURIComponent(redVal)}&microred=${encodeURIComponent(mrVal)}&pd_digitacion=${encodeURIComponent(pdVal)}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const json = await res.json();
-            if (res.ok) {
-                json.data.forEach(est => {
-                    const opt = document.createElement('option');
-                    opt.value = est;
-                    opt.textContent = est;
-                    selectEstablecimiento.appendChild(opt);
+            try {
+                const res = await fetch(`/api/reportes/establecimientos?red=${encodeURIComponent(redVal)}&microred=${encodeURIComponent(mrVal)}&pd_digitacion=${encodeURIComponent(pdVal)}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
                 });
+                const json = await res.json();
+                if (res.ok && Array.isArray(json.data)) {
+                    json.data.forEach(est => {
+                        const opt = document.createElement('option');
+                        opt.value = est;
+                        opt.textContent = est;
+                        selectEstablecimiento.appendChild(opt);
+                    });
+                }
+            } catch (err) {
+                console.error('Error cargando establecimientos:', err);
             }
-        } catch (err) {
-            console.error('Error cargando establecimientos:', err);
-        }
-    });
+        });
+    }
 
-    // Inicializar carga de redes al abrir la vista
-    cargarRedes();
-
+    // Cargar Cursos de Vida solo si existe el select (en Reporte Vertical)
     async function cargarCursosDeVida() {
         if (!selectCursoVida) return;
 
         try {
-            const res = await fetch('/api/reportes/curso-vida', { // Ajusta la ruta si tu endpoint es diferente
+            const res = await fetch('/api/reportes/curso-vida', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const json = await res.json();
-            
+
             if (res.ok) {
                 const lista = json.data || json;
-                lista.forEach(item => {
-                    const opt = document.createElement('option');
-                    opt.value = item;
-                    opt.textContent = item;
-                    selectCursoVida.appendChild(opt);
-                });
+                if (Array.isArray(lista)) {
+                    lista.forEach(item => {
+                        const opt = document.createElement('option');
+                        opt.value = item;
+                        opt.textContent = item;
+                        selectCursoVida.appendChild(opt);
+                    });
+                }
             }
         } catch (err) {
             console.error('Error cargando cursos de vida:', err);
         }
     }
 
-    
-    cargarCursosDeVida();
+    cargarRedes();
+    if (esReporteVertical) {
+        cargarCursosDeVida();
+    }
 }
 
-
-// --- LÓGICA DE BÚSQUEDA FINAL DE CITAS (VÍA POST JSON) ---
-// --- LÓGICA DE BÚSQUEDA FINAL DE CITAS Y PAGINACIÓN ---
+// --- LÓGICA DE BÚSQUEDA, PAGINACIÓN Y EXPORTACIÓN ---
 const filterForm = document.getElementById('filterForm');
 const resultsBody = document.getElementById('resultsBody');
 const btnPrev = document.getElementById('btnPrev');
 const btnNext = document.getElementById('btnNext');
 const pageInfo = document.getElementById('pageInfo');
+const btnReset = document.getElementById('btnReset');
+const btnExportar = document.getElementById('btnExportar');
 
 let currentPage = 1;
-const limit = 22; // Elementos por página
+const limit = esBusquedaEspecifica ? 22 : 10;
+
+function construirPayload() {
+    const basePayload = {
+        anio_p: parseInt(document.getElementById('inputAnio')?.value, 10) || 0,
+        mes_inicio: parseInt(document.getElementById('inputMesInicio')?.value, 10) || 0,
+        mes_final: parseInt(document.getElementById('inputMesFinal')?.value, 10) || 0,
+        red_p: document.getElementById('selectRed')?.value || "",
+        microred_p: document.getElementById('selectMicrored')?.value || "",
+        pd_digitacion_p: document.getElementById('selectPd')?.value || "",
+        establecimiento_p: document.getElementById('selectEstablecimiento')?.value || "",
+        documento_p: document.getElementById('inputDocumento')?.value.trim() || "",
+        cie_cmp_p: document.getElementById('inputCieCpm')?.value.trim() || ""
+    };
+
+    if (esBusquedaEspecifica) {
+        return {
+            ...basePayload,
+            id_cita_p: parseInt(document.getElementById('inputIdCita')?.value, 10) || 0,
+            app_p: document.getElementById('inputApp')?.value.trim() || "",
+            lab_p: document.getElementById('inputLab')?.value.trim() || ""
+        };
+    }
+
+    return {
+        ...basePayload,
+        curso_vida_p: document.getElementById('selectCursoVida')?.value || ""
+    };
+}
+
+function renderizarFilas(registros) {
+    resultsBody.innerHTML = '';
+
+    registros.forEach(item => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${item.id_cita || ''}</td>
+            <td>${item.anio || ''}</td>
+            <td>${item.mes || ''}</td>
+            <td>${item.dia || ''}</td>
+            <td>${item.lote || ''}</td>
+            <td>${item.num_pag || ''}</td>
+            <td>${item.num_reg || ''}</td>
+            <td>${item.codigo_unico || ''}</td>
+            <td>${item.nombre_establecimiento || ''}</td>
+            <td>${item.id_paciente || ''}</td>
+            <td>${item.documento || ''}</td>
+            <td>${item.nombre_paciente || ''}</td>
+            <td>${item.genero || ''}</td>
+            <td>${item.id_condicion_establecimiento || ''}</td>
+            <td>${item.id_condicion_servicio || ''}</td>
+            <td>${item.edad_reg || ''}</td>
+            <td>${item.tipo_edad || ''}</td>
+            <td>${item.codigo_item || ''}</td>
+            <td>${item.tipo_diagnostico || ''}</td>
+            <td>${item.valor_lab || ''}</td>
+            <td>${item.id_correlativo || ''}</td>
+            <td>${item.id_correlativo_lab || ''}</td>
+            <td>${item.peso || ''}</td>
+            <td>${item.talla || ''}</td>
+            <td>${item.hemoglobina || ''}</td>
+            <td>${item.perimetro_abdominal || ''}</td>
+            <td>${item.perimetro_cefalico || ''}</td>
+            <td>${item.descripcion_otra_condicion || ''}</td>
+            <td>${item.fecha_ultima_regla || ''}</td>
+            <td>${item.nombre_personal_salud || ''}</td>
+            <td>${item.nombre_registrador || ''}</td>
+            <td>${item.fecha_registro || ''}</td>
+            <td>${item.fecha_modificacion || ''}</td>
+        `;
+        resultsBody.appendChild(tr);
+    });
+}
 
 async function realizarBusqueda(page = 1) {
     currentPage = page;
+    const payload = construirPayload();
 
-    // 2. Construimos el payload JSON exactamente igual al que ya usabas
-    const payload = {
-        anio_p: parseInt(document.getElementById('inputAnio').value, 10) || 0,
-        mes_inicio: parseInt(document.getElementById('inputMesInicio').value, 10) || 0,
-        mes_final: parseInt(document.getElementById('inputMesFinal').value, 10) || 0,
-        red_p: document.getElementById('selectRed').value || "",
-        microred_p: document.getElementById('selectMicrored').value || "",
-        pd_digitacion_p: document.getElementById('selectPd').value || "",
-        establecimiento_p: document.getElementById('selectEstablecimiento').value || "",
-        curso_vida_p: document.getElementById('selectCursoVida') ? document.getElementById('selectCursoVida').value : "",
-        cie_cmp_p: document.getElementById('inputCieCpm') ? document.getElementById('inputCieCpm').value : "",
-        documento_p: document.getElementById('inputDocumento').value || ""
-    };
-
-    // DEPURACIÓN: Mira esto en la consola F12 de tu navegador
     console.log(">>> PAYLOAD ENVIADO A GO (Pág " + currentPage + "):", JSON.stringify(payload, null, 2));
 
-    resultsBody.innerHTML = `<tr><td colspan="30" class="text-center">Buscando registros...</td></tr>`;
+    resultsBody.innerHTML = `<tr><td colspan="33" class="text-center">Buscando registros...</td></tr>`;
 
     try {
-        // Leemos el token en el mismo momento de la petición
         const token = localStorage.getItem('access_token');
-
         if (!token) {
             alert("Tu sesión ha expirado. Por favor, inicia sesión nuevamente.");
             window.location.href = '/login';
             return;
         }
 
-        // Enviamos la página actual y el límite por query params junto al POST
-        const res = await fetch(`/api/buscar?page=${currentPage}&limit=${limit}`, {
+        const endpointBuscar = esBusquedaEspecifica
+            ? `/api/buscaespecifica?page=${currentPage}&limit=${limit}`
+            : `/api/buscar?page=${currentPage}&limit=${limit}`;
+
+        const res = await fetch(endpointBuscar, {
             method: 'POST',
-            headers: { 
+            headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}` 
+                'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify(payload)
         });
 
         const json = await res.json();
-
-        // DEPURACIÓN: Mira la respuesta cruda del servidor
         console.log(">>> RESPUESTA DEL SERVIDOR:", json);
 
         if (res.ok) {
-            resultsBody.innerHTML = ''; 
+            const registros = json.data || [];
 
-            // Si la data es null forzamos a que sea un array vacío []
-            const registros = json.data || []; 
-
-            // Verificamos si tiene elementos (válido)
             if (!Array.isArray(registros) || registros.length === 0) {
-                resultsBody.innerHTML = `<tr><td colspan="30" class="text-center">No se encontraron registros con los filtros seleccionados.</td></tr>`;
+                resultsBody.innerHTML = `<tr><td colspan="33" class="text-center">No se encontraron registros con los filtros seleccionados.</td></tr>`;
                 if (pageInfo) pageInfo.textContent = `Página 0 de 0`;
                 if (btnPrev) btnPrev.disabled = true;
                 if (btnNext) btnNext.disabled = true;
                 return;
             }
 
-            registros.forEach(item => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${item.id_cita || ''}</td>
-                    <td>${item.anio || ''}</td>
-                    <td>${item.mes || ''}</td>
-                    <td>${item.dia || ''}</td>
-                    <td>${item.lote || ''}</td>
-                    <td>${item.num_pag || ''}</td>
-                    <td>${item.num_reg || ''}</td>
-                    <td>${item.codigo_unico || ''}</td>
-                    <td>${item.nombre_establecimiento || ''}</td>
-                    <td>${item.id_paciente || ''}</td>
-                    <td>${item.documento || ''}</td>
-                    <td>${item.nombre_paciente || ''}</td>
-                    <td>${item.genero || ''}</td>
-                    <td>${item.id_condicion_establecimiento || ''}</td>
-                    <td>${item.id_condicion_servicio || ''}</td>
-                    <td>${item.edad_reg || ''}</td>
-                    <td>${item.tipo_edad || ''}</td>
-                    <td>${item.codigo_item || ''}</td>
-                    <td>${item.tipo_diagnostico || ''}</td>
-                    <td>${item.valor_lab || ''}</td>
-                    <td>${item.id_correlativo || ''}</td>
-                    <td>${item.id_correlativo_lab || ''}</td>
-                    <td>${item.peso || ''}</td>
-                    <td>${item.talla || ''}</td>
-                    <td>${item.hemoglobina || ''}</td>
-                    <td>${item.perimetro_abdominal || ''}</td>
-                    <td>${item.perimetro_cefalico || ''}</td>
-                    <td>${item.descripcion_otra_condicion || ''}</td>
-                    <td>${item.fecha_ultima_regla || ''}</td>
-                    <td>${item.nombre_personal_salud || ''}</td>
-                    <td>${item.nombre_registrador || ''}</td>
-                    <td>${item.fecha_registro || ''}</td>
-                    <td>${item.fecha_modificacion || ''}</td>
-                `;
-                resultsBody.appendChild(tr);
-            });
+            renderizarFilas(registros);
 
-            // Actualizamos los controles de paginación usando json.meta
             const meta = json.meta || { page: 1, page_count: 1 };
             if (pageInfo) pageInfo.textContent = `Página ${meta.page} de ${meta.page_count}`;
-            
             if (btnPrev) btnPrev.disabled = meta.page <= 1;
             if (btnNext) btnNext.disabled = meta.page >= meta.page_count;
-
         } else {
             console.error('Error del servidor:', json);
-            resultsBody.innerHTML = `<tr><td colspan="30" class="text-center" style="color: red;">Error en la respuesta del servidor.</td></tr>`;
+            resultsBody.innerHTML = `<tr><td colspan="33" class="text-center" style="color: red;">Error en la respuesta del servidor.</td></tr>`;
         }
-
     } catch (err) {
         console.error('Error de red en la búsqueda:', err);
-        resultsBody.innerHTML = `<tr><td colspan="30" class="text-center" style="color: red;">Error de conexión con el servidor.</td></tr>`;
+        resultsBody.innerHTML = `<tr><td colspan="33" class="text-center" style="color: red;">Error de conexión con el servidor.</td></tr>`;
     }
 }
 
 if (filterForm) {
-    // Al hacer submit siempre empezamos desde la página 1
     filterForm.addEventListener('submit', (e) => {
-        e.preventDefault(); 
+        e.preventDefault();
         realizarBusqueda(1);
     });
 }
 
-// Eventos para los botones de Anterior y Siguiente
 if (btnPrev) {
     btnPrev.addEventListener('click', () => {
         if (currentPage > 1) {
@@ -636,27 +656,33 @@ if (btnNext) {
     });
 }
 
+if (btnReset && filterForm) {
+    btnReset.addEventListener('click', () => {
+        filterForm.reset();
+        const selectMicrored = document.getElementById('selectMicrored');
+        const selectPd = document.getElementById('selectPd');
+        const selectEstablecimiento = document.getElementById('selectEstablecimiento');
 
-// exportar id citas
-const btnExportar = document.getElementById('btnExportar');
+        if (selectMicrored) {
+            selectMicrored.innerHTML = '<option value="">-- Seleccione Microred --</option>';
+            selectMicrored.disabled = true;
+        }
+        if (selectPd) {
+            selectPd.innerHTML = '<option value="">-- Seleccione P. Digitacion --</option>';
+            selectPd.disabled = true;
+        }
+        if (selectEstablecimiento) {
+            selectEstablecimiento.innerHTML = '<option value="">-- Seleccione Establecimiento --</option>';
+            selectEstablecimiento.disabled = true;
+        }
+    });
+}
 
 if (btnExportar) {
     btnExportar.addEventListener('click', async () => {
-        // Construimos el mismo payload con los filtros actuales seleccionados en pantalla
-        const payload = {
-            anio_p: parseInt(document.getElementById('inputAnio').value, 10) || 0,
-            mes_inicio: parseInt(document.getElementById('inputMesInicio').value, 10) || 0,
-            mes_final: parseInt(document.getElementById('inputMesFinal').value, 10) || 0,
-            red_p: document.getElementById('selectRed').value || "",
-            microred_p: document.getElementById('selectMicrored').value || "",
-            pd_digitacion_p: document.getElementById('selectPd').value || "",
-            establecimiento_p: document.getElementById('selectEstablecimiento').value || "",
-            curso_vida_p: document.getElementById('selectCursoVida') ? document.getElementById('selectCursoVida').value : "",
-            cie_cmp_p: document.getElementById('inputCieCpm') ? document.getElementById('inputCieCpm').value : "",
-            documento_p: document.getElementById('inputDocumento').value || ""
-        };
-
+        const payload = construirPayload();
         const token = localStorage.getItem('access_token');
+
         if (!token) {
             alert("Tu sesión ha expirado.");
             window.location.href = '/login';
@@ -667,7 +693,11 @@ if (btnExportar) {
         btnExportar.disabled = true;
 
         try {
-            const res = await fetch('/api/reportes/exportar', {
+            const endpointExportar = esBusquedaEspecifica
+                ? '/api/reportes/exportarbusca'
+                : '/api/reportes/exportar';
+
+            const res = await fetch(endpointExportar, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -680,17 +710,16 @@ if (btnExportar) {
                 throw new Error("Error al generar el archivo Excel");
             }
 
-            // Convertimos la respuesta en un blob binario descargable
             const blob = await res.blob();
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
+            const prefijo = esBusquedaEspecifica ? 'Busqueda_Especifica' : 'Reporte_Vertical';
             a.href = url;
-            a.download = `Reporte_Vertical_${new Date().toISOString().slice(0,10)}.xlsx`;
+            a.download = `${prefijo}_${new Date().toISOString().slice(0, 10)}.xlsx`;
             document.body.appendChild(a);
             a.click();
             a.remove();
             window.URL.revokeObjectURL(url);
-
         } catch (err) {
             console.error("Error en la exportación:", err);
             alert("Ocurrió un error al exportar los datos.");

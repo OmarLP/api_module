@@ -13,6 +13,10 @@ type (
 		BuscarIdCita(req domain.BuscarIdCita, offset, limit int64) ([]domain.VerticalReport, error)
 		Count(req domain.BuscarIdCita) (int64, error)
 
+		BuscaEspecifica(req domain.BuscaEspecifica, offset, limit int64) ([]domain.VerticalReport, error)
+		CountBE(req domain.BuscaEspecifica) (int64, error)
+		ExportarBuscaEspecifica(req domain.BuscaEspecifica) ([]domain.VerticalReport, error)
+
 		// metodos para los catalogos en cascada
 		GetRedes() ([]string, error)
 		GetMicroredes(red string) ([]string, error)
@@ -170,10 +174,10 @@ func (repo *repository) BuscarIdCita(req domain.BuscarIdCita, offset, limit int6
 func (repo *repository) Count(req domain.BuscarIdCita) (int64, error) {
 	var total int64
 
-	// Envolvemos tu función de postgres en un SELECT COUNT(*)
+	// Envolvemos la función de postgres en un SELECT COUNT(*)
 	query := `
         SELECT COUNT(*) 
-        FROM fc_buscar_idcita(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        FROM fc_buscar_idcita(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `
 
 	err := repo.db.Raw(query,
@@ -187,6 +191,8 @@ func (repo *repository) Count(req domain.BuscarIdCita) (int64, error) {
 		req.CursoVida,
 		req.CieCpm,
 		req.Documento,
+		1000000,
+		0,
 	).Scan(&total).Error
 
 	if err != nil {
@@ -194,4 +200,93 @@ func (repo *repository) Count(req domain.BuscarIdCita) (int64, error) {
 	}
 
 	return total, nil
+}
+
+// para búsqueda específica
+func (repo *repository) BuscaEspecifica(req domain.BuscaEspecifica, offset, limit int64) ([]domain.VerticalReport, error) {
+	// mapear los resultados
+	var resultados []domain.VerticalReport
+
+	query := `SELECT * from fc_busca_especifica(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+
+	err := repo.db.Raw(query,
+		req.Anio,
+		req.MesInicio,
+		req.MesFinal,
+		req.Red,
+		req.Microred,
+		req.PdDigitacion,
+		req.Establecimiento,
+		req.IdCita,
+		req.App,
+		req.Documento,
+		req.CieCpm,
+		req.Lab,
+		limit,
+		offset,
+	).Scan(&resultados).Error
+
+	if err != nil {
+		return nil, fmt.Errorf("Error al procesar: public.fc_busca_especifica: %w", err)
+	}
+
+	return resultados, nil
+}
+
+// contar registros para BuscaEspecifica
+func (repo *repository) CountBE(req domain.BuscaEspecifica) (int64, error) {
+	var total int64
+
+	query := `SELECT COUNT(*) FROM fc_busca_especifica(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+
+	err := repo.db.Raw(query,
+		req.Anio,
+		req.MesInicio,
+		req.MesFinal,
+		req.Red,
+		req.Microred,
+		req.PdDigitacion,
+		req.Establecimiento,
+		req.IdCita,
+		req.App,
+		req.Documento,
+		req.CieCpm,
+		req.Lab,
+		1000000,
+		0,
+	).Scan(&total).Error
+
+	if err != nil {
+		return 0, fmt.Errorf("error al contar registros: %w", err)
+	}
+
+	return total, nil
+
+}
+
+func (repo *repository) ExportarBuscaEspecifica(req domain.BuscaEspecifica) ([]domain.VerticalReport, error) {
+	var resultados []domain.VerticalReport
+	query := `SELECT * from fc_busca_especifica(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 999999, 0)`
+
+	err := repo.db.Raw(query,
+		req.Anio,
+		req.MesInicio,
+		req.MesFinal,
+		req.Red,
+		req.Microred,
+		req.PdDigitacion,
+		req.Establecimiento,
+		req.IdCita,
+		req.App,
+		req.Documento,
+		req.CieCpm,
+		req.Lab,
+	).Scan(&resultados).Error
+
+	if err != nil {
+		return nil, fmt.Errorf("error al exportar public.fc_busca_especifica %w", err)
+	}
+
+	return resultados, nil
+
 }
